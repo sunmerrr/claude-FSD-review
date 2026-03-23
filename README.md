@@ -1,5 +1,7 @@
 # claude-FSD-review
 
+![status](https://img.shields.io/badge/status-beta-yellow) ![license](https://img.shields.io/badge/license-MIT-blue)
+
 [Claude Code](https://claude.com/claude-code) skill for reviewing [Feature-Sliced Design](https://feature-sliced.design/) frontend projects.
 
 9-stage parallel review pipeline that checks CI/CD, architecture, code quality, design system compliance, web quality, security, testing, dependency safety, and simplification — then generates a review report without modifying your code.
