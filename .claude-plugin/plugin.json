@@ -1,0 +1,11 @@
+{
+  "name": "FSD-review",
+  "version": "1.0.0",
+  "description": "FSD(Feature-Sliced Design) frontend code review — 7-stage review pipeline for architecture, code quality, design system, web quality, security, and testing",
+  "author": {
+    "name": "sunmerrr"
+  },
+  "homepage": "https://github.com/sunmerrr/claude-FSD-review",
+  "repository": "https://github.com/sunmerrr/claude-FSD-review",
+  "license": "MIT"
+}
