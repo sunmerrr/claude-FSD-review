@@ -27,7 +27,11 @@ All stages run **in parallel** for faster results.
 ### As Claude Code Plugin (recommended)
 
 ```bash
-claude plugin add sunmerrr/claude-FSD-review
+# 1. Add marketplace
+claude plugin marketplace add sunmerrr/claude-FSD-review
+
+# 2. Install plugin
+claude plugin install FSD-review@sunmerrr-FSD-review
 ```
 
 ### Manual Installation
