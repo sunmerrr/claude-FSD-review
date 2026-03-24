@@ -4,14 +4,14 @@
     "name": "sunmerrr"
   },
   "metadata": {
-    "description": "FSD frontend code review pipeline — 7 stages for comprehensive review"
+    "description": "FSD frontend code review pipeline — 9 stages for comprehensive review"
   },
   "plugins": [
     {
       "name": "FSD-review",
       "source": "./",
-      "description": "FSD(Feature-Sliced Design) frontend code review — CI/CD, architecture, code quality, design system, web quality, security, testing",
-      "version": "1.0.0",
+      "description": "FSD(Feature-Sliced Design) frontend code review — 9 parallel stages: CI/CD, architecture, code quality, design system, web quality, security, testing, dependencies, simplification",
+      "version": "1.1.0",
       "homepage": "https://github.com/sunmerrr/claude-FSD-review",
       "license": "MIT",
       "keywords": ["FSD", "feature-sliced-design", "frontend", "review", "code-quality", "accessibility", "security"]
