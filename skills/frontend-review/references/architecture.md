@@ -1,53 +1,157 @@
-# ② 아키텍처 리뷰 (Feature-Sliced Design)
+# ② Architecture Review (Feature-Sliced Design)
 
-FSD 아키텍처 준수 여부를 검증한다. FSD 구조가 아닌 프로젝트는 이 단계를 건너뛴다.
+Verify compliance with FSD architecture. Skip this step for projects that do not follow the FSD structure.
 
-## FSD 감지
+## FSD Detection
 
-아래 디렉토리 중 3개 이상 존재하면 FSD 프로젝트로 판단:
+If 3 or more of the following directories exist, the project is considered an FSD project:
 - `app/`, `pages/`, `widgets/`, `features/`, `entities/`, `shared/`
 - `src/app/`, `src/pages/`, `src/widgets/`, `src/features/`, `src/entities/`, `src/shared/`
 
-## FSD 7개 레이어 (상위 → 하위)
+## FSD 6 Layers (Top → Bottom)
 
 ```
-app        ← 최상위: 라우팅, 프로바이더, 글로벌 설정
-pages      ← 페이지 단위 조합
-widgets    ← 자기 완결형 큰 기능 블록
-features   ← 재사용 가능한 제품 기능
-entities   ← 비즈니스 엔티티 (user, product)
-shared     ← 최하위: 유틸, UI 킷, 타입
+app        ← Top level: routing, providers, global configuration
+pages      ← Page-level composition
+widgets    ← Self-contained large functional blocks
+features   ← Reusable product features
+entities   ← Business entities (user, product)
+shared     ← Bottom level: utilities, UI kit, types
 ```
 
-## 체크리스트
+## Checklist
 
-### 의존성 방향 (핵심)
-- [ ] **상위 → 하위만 허용**: features는 entities, shared를 import 가능. entities는 features를 import 불가.
-- [ ] **같은 레이어 간 import 금지**: features/A가 features/B를 직접 import하면 위반.
+### Dependency Direction (Core Rule)
 
-허용되는 의존성 방향:
+- [ ] **Only top → bottom is allowed**: features can import entities and shared. entities cannot import features.
+- [ ] **No imports between slices in the same layer**: If features/A directly imports features/B, it is a violation.
+
+Allowed dependency directions:
 ```
 app → pages → widgets → features → entities → shared
          ↘      ↘         ↘          ↘
           shared  shared    shared     shared
 ```
 
-### public API 접근
-- [ ] 슬라이스 내부 파일에 직접 접근하지 않는가? (`features/auth/model/store.ts` 대신 `features/auth`로 import)
-- [ ] 각 슬라이스에 `index.ts` (barrel export)가 존재하는가?
+**Violation examples and solutions**:
 
-### 비즈니스 로직 배치
-- [ ] API 호출이 적절한 레이어에 있는가? (shared/api 또는 entities/*/api)
-- [ ] UI 컴포넌트에 비즈니스 로직이 섞여있지 않은가?
-- [ ] shared 레이어에 비즈니스 로직이 포함되어 있지 않은가?
+| Violation | Code | Solution |
+|-----------|------|----------|
+| Reverse import | `entities/user` imports `features/auth` | Move shared logic down to `shared/`, or define the interface needed by `entities/user` and inject it from `features/auth` |
+| Same-layer import | `features/cart` imports `features/product` | Move shared data down to `entities/`, or compose both features in a higher layer (widgets/pages) |
+| shared → upper layer | `shared/api` imports type from `entities/user` | Define generic types in `shared/types`, and extend with concrete types in `entities/` |
 
-## 판정 기준
+### Public API Access
 
-| 이슈 | 심각도 |
-|------|--------|
-| 하위 → 상위 import (역방향) | ⚠️ WARNING (자동 수정 안 함, 문서에 경고) |
-| 같은 레이어 간 직접 import | ⚠️ WARNING |
-| public API 우회 접근 | ⚠️ WARNING |
-| shared에 비즈니스 로직 | ⚠️ WARNING |
+- [ ] Are internal files within a slice not accessed directly?
+- [ ] Does each slice have an `index.ts` (barrel export)?
 
-> 아키텍처 위반은 모두 WARNING으로 처리한다. 자동 수정하지 않고 review 문서에 경고로 남긴다.
+**Violation examples and solutions**:
+
+```typescript
+// ❌ Direct access to internal files
+import { authStore } from 'features/auth/model/store'
+import { UserCard } from 'entities/user/ui/UserCard'
+
+// ✅ Access through public API
+import { authStore } from 'features/auth'
+import { UserCard } from 'entities/user'
+```
+
+When barrel exports are missing:
+```typescript
+// Create features/auth/index.ts
+export { authStore } from './model/store'
+export { LoginForm } from './ui/LoginForm'
+// Selectively export only what should be exposed externally
+```
+
+### Business Logic Placement
+
+- [ ] Are API calls placed in the appropriate layer?
+- [ ] Is business logic not mixed into UI components?
+- [ ] Does the shared layer not contain business logic?
+
+**API call placement guidelines**:
+
+| API Type | Placement Layer | Example |
+|----------|----------------|---------|
+| General-purpose HTTP client (axios wrapper, fetch config) | `shared/api` | `shared/api/client.ts` |
+| Specific entity CRUD | `entities/*/api` | `entities/user/api/getUser.ts` |
+| API tied to a business feature | `features/*/api` | `features/checkout/api/processPayment.ts` |
+| Data composition for page loading | `pages/*/api` or `pages/*/model` | `pages/dashboard/model/loadDashboard.ts` |
+
+**When business logic is mixed into UI**:
+
+```typescript
+// ❌ Business logic mixed in component
+function OrderCard({ order }) {
+  const discount = order.total > 100 ? order.total * 0.1 : 0  // business logic
+  const finalPrice = order.total - discount                     // business logic
+  return <div>{finalPrice}원</div>
+}
+
+// ✅ Logic separated
+// entities/order/lib/calcPrice.ts
+export function calcFinalPrice(order) {
+  const discount = order.total > 100 ? order.total * 0.1 : 0
+  return order.total - discount
+}
+
+// entities/order/ui/OrderCard.tsx
+import { calcFinalPrice } from '../lib/calcPrice'
+function OrderCard({ order }) {
+  return <div>{calcFinalPrice(order)}원</div>
+}
+```
+
+**When business logic exists in shared**:
+
+```typescript
+// ❌ Business logic in shared
+// shared/lib/orderUtils.ts
+export function isEligibleForDiscount(user, order) { ... }
+
+// ✅ Business logic belongs in entities or above
+// entities/order/lib/discount.ts
+export function isEligibleForDiscount(user, order) { ... }
+```
+
+Decision criterion: "Does this logic need to know about a specific domain concept (user, order, product, etc.)?" → If yes, place it in entities or above, not in shared.
+
+### Segment Structure
+
+- [ ] Is each slice properly divided into appropriate segments?
+
+**Standard segments**:
+
+| Segment | Role | Contains |
+|---------|------|----------|
+| `ui/` | Display | Components, styles |
+| `model/` | State & logic | Store, hooks, business logic |
+| `api/` | External communication | API calls, request/response types |
+| `lib/` | Utilities | Helper functions, constants, formatters |
+| `config/` | Configuration | Environment settings, constant maps |
+
+```
+features/auth/
+├── ui/          ← LoginForm, AuthButton
+├── model/       ← authStore, useAuth
+├── api/         ← login(), logout()
+├── lib/         ← validatePassword()
+└── index.ts     ← public API
+```
+
+## Severity Criteria
+
+| Issue | Severity |
+|-------|----------|
+| Bottom → top import (reverse direction) | ⚠️ WARNING |
+| Direct import between slices in the same layer | ⚠️ WARNING |
+| Bypassing public API access | ⚠️ WARNING |
+| Missing barrel export (index.ts) | ⚠️ WARNING |
+| Business logic in shared | ⚠️ WARNING |
+| Business logic mixed in UI components | ⚠️ WARNING |
+| No segment separation (all code in a single file) | ⚠️ WARNING |
+
+> All architecture violations are treated as WARNING. They are not auto-fixed; instead, warnings and suggested resolution directions are documented in the review.

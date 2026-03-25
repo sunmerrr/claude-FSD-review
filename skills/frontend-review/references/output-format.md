@@ -1,89 +1,89 @@
 # FSD Review Output Format
 
-리뷰 결과 리포트의 형식.
+Format for the review result report.
 
 ---
 
-## 리뷰 요약
+## Review Summary
 
-> 리뷰 대상: {변경된 파일 수}개 파일, 브랜치 `{branch-name}`
+> Review target: {number of changed files} files, branch `{branch-name}`
 
-| 단계 | 결과 | 이슈 |
+| Step | Result | Issues |
 |------|------|------|
-| ① CI/CD | ✅/❌/⊘ | N개 |
-| ② 아키텍처 | ✅/⚠️/⊘ | N개 |
-| ③ 코드 품질 | ✅/❌ | N개 |
-| ④ 디자인 시스템 | ✅/❌/⊘ | N개 |
-| ⑤ 웹 품질 | ✅/⚠️ | N개 |
-| ⑥ 보안 | ✅/❌ | N개 |
-| ⑦ 테스트 | ✅/❌/⊘ | N개 |
-| ⑧ 의존성/배포 | ✅/⚠️/⊘ | N개 |
-| ⑨ 단순화 | ✅/⚠️ | N개 |
+| ① CI/CD | ✅/❌/⊘ | N |
+| ② Architecture | ✅/⚠️/⊘ | N |
+| ③ Code Quality | ✅/❌ | N |
+| ④ Design System | ✅/❌/⊘ | N |
+| ⑤ Web Quality | ✅/⚠️ | N |
+| ⑥ Security | ✅/❌ | N |
+| ⑦ Tests | ✅/❌/⊘ | N |
+| ⑧ Dependencies/Deployment | ✅/⚠️/⊘ | N |
+| ⑨ Simplification | ✅/⚠️ | N |
 
 ---
 
-## 단계별 상세
+## Step Details
 
 ### ① CI/CD
 
-| 항목 | 결과 | 상세 |
+| Item | Result | Details |
 |------|------|------|
-| 타입 체크 | ✅/❌/⊘ | (에러 시 요약) |
-| 린팅 | ✅/❌/⊘ | (에러 수) |
-| 빌드 | ✅/❌/⊘ | (에러 시 요약) |
-| 보안 감사 | ✅/❌ | (취약점 수) |
+| Type Check | ✅/❌/⊘ | (summary on error) |
+| Linting | ✅/❌/⊘ | (number of errors) |
+| Build | ✅/❌/⊘ | (summary on error) |
+| Security Audit | ✅/❌ | (number of vulnerabilities) |
 
-### ② 아키텍처
+### ② Architecture
 
-> FSD 구조가 아니면: `⊘ SKIP — FSD 구조 아님`
+> If not FSD structure: `⊘ SKIP — Not FSD structure`
 
-- (레이어 위반, 의존성 방향 이슈 목록)
-- 각 이슈에 파일명:라인 포함
+- (List of layer violations and dependency direction issues)
+- Each issue includes filename:line
 
-### ③ 코드 품질
+### ③ Code Quality
 
-**안티패턴 감지**:
-| 파일 | 라인 | 안티패턴 | 심각도 | 설명 |
+**Anti-pattern Detection**:
+| File | Line | Anti-pattern | Severity | Description |
 |------|------|---------|--------|------|
-| `path/file.tsx` | 42 | Prop Drilling | ❌ | 설명 |
+| `path/file.tsx` | 42 | Prop Drilling | ❌ | Description |
 
-**코드 리뷰 이슈**:
-- (구체적 이슈 목록, 파일:라인 포함)
+**Code Review Issues**:
+- (Specific issue list, including file:line)
 
-### ④ 디자인 시스템
+### ④ Design System
 
-> 디자인 시스템이 없으면: `⊘ SKIP — 디자인 시스템 미감지`
+> If no design system: `⊘ SKIP — Design system not detected`
 
-- (하드코딩 값, 컴포넌트 미사용 등 이슈 목록)
+- (List of issues such as hardcoded values, unused components, etc.)
 
-### ⑤ 웹 품질
+### ⑤ Web Quality
 
-**접근성**:
-- (이슈 목록)
+**Accessibility**:
+- (Issue list)
 
-**성능**:
-- (이슈 목록)
+**Performance**:
+- (Issue list)
 
 **SEO**:
-- (이슈 목록, SSR 프로젝트가 아니면 생략)
+- (Issue list, omit if not an SSR project)
 
-### ⑥ 보안
+### ⑥ Security
 
-| 파일 | 라인 | 위협 | 심각도 | 설명 |
+| File | Line | Threat | Severity | Description |
 |------|------|------|--------|------|
 | `path/file.tsx` | 15 | XSS | ❌ | `dangerouslySetInnerHTML` without sanitization |
 
-### ⑦ 테스트
+### ⑦ Tests
 
-| 항목 | 결과 | 상세 |
+| Item | Result | Details |
 |------|------|------|
-| 테스트 실행 | ✅ N개 통과 / ❌ N개 실패 / ⊘ 없음 | (실패 시 목록) |
-| 테스트 품질 | ⚠️ N개 경고 | (경고 목록) |
+| Test Execution | ✅ N passed / ❌ N failed / ⊘ None | (list on failure) |
+| Test Quality | ⚠️ N warnings | (warning list) |
 
 ---
 
 ## Notes
 
-- 이슈가 없는 단계의 상세 섹션은 생략한다
-- 파일명, 함수명, 라인 번호를 항상 구체적으로 명시한다
-- 리뷰 결과는 사용자가 사용하는 언어로 작성한다
+- Omit the detail section for steps with no issues
+- Always specify file names, function names, and line numbers concretely
+- Write the review results in the language used by the user

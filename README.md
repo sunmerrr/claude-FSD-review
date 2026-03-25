@@ -2,9 +2,9 @@
 
 ![status](https://img.shields.io/badge/status-beta-yellow) ![license](https://img.shields.io/badge/license-MIT-blue)
 
-[Claude Code](https://claude.com/claude-code) skill for reviewing [Feature-Sliced Design](https://feature-sliced.design/) frontend projects.
+[Claude Code](https://claude.com/claude-code) plugin for comprehensive frontend code review with [FSD](https://fsd.how/) architecture validation.
 
-9-stage parallel review pipeline that checks CI/CD, architecture, code quality, design system compliance, web quality, security, testing, dependency safety, and simplification — then generates a review report without modifying your code.
+9-stage parallel review pipeline covering CI/CD, FSD architecture, code quality, design system, web quality, security, testing, dependency safety, and simplification — with FSD layer/dependency validation as a core stage. Generates a review report without modifying your code.
 
 ## Review Stages
 
@@ -65,7 +65,7 @@ Review reports are saved to `.review/{branch-name}-review.md`.
 |-------|-------------|---------------------|
 | ① CI/CD | Runs tsc, lint, build, audit | Skips missing scripts |
 | ② Architecture | Validates FSD layer imports | Skips if not FSD project |
-| ③ Code Quality | React anti-patterns, clean code | — |
+| ③ Code Quality | Clean code, ES6+, React anti-patterns | React checks skip if not React project |
 | ④ Design System | Hardcoded values, component reuse | Skips if no design system |
 | ⑤ Web Quality | a11y, performance, SEO patterns | SEO skips for non-SSR |
 | ⑥ Security | XSS, CSRF, secrets, deps | — |

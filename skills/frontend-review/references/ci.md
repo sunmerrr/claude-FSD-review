@@ -1,44 +1,44 @@
-# ① CI/CD 규칙 기반 검사
+# ① CI/CD Rule-Based Checks
 
-로컬에서 실행 가능한 규칙 기반 검사. pass/fail로 판정한다.
+Rule-based checks that can be run locally. Determined as pass/fail.
 
-## 검사 항목
+## Check Items
 
-### 타입 체크
+### Type Check
 ```bash
-{pkg-manager} run typecheck  # 또는 npx tsc --noEmit
+{pkg-manager} run typecheck  # or npx tsc --noEmit
 ```
-- 타입 에러가 하나라도 있으면 ❌ FAIL
-- `tsconfig.json`이 없으면 ⊘ SKIP
+- If there is even one type error ❌ FAIL
+- If `tsconfig.json` does not exist ⊘ SKIP
 
-### 린팅
+### Linting
 ```bash
-{pkg-manager} run lint  # 또는 npx biome check . / npx eslint .
+{pkg-manager} run lint  # or npx biome check . / npx eslint .
 ```
-- lint 에러가 있으면 ❌ FAIL (warning은 ⚠️)
-- auto-fix 가능한 에러는 자동 수정 대상
+- If there are lint errors ❌ FAIL (warnings are ⚠️)
+- Auto-fixable errors are subject to automatic correction
 
-### 빌드
+### Build
 ```bash
 {pkg-manager} run build
 ```
-- 빌드 실패 시 ❌ FAIL
-- build 스크립트가 없으면 ⊘ SKIP
+- If build fails ❌ FAIL
+- If build script does not exist ⊘ SKIP
 
-### 보안 감사
+### Security Audit
 ```bash
 npm audit --audit-level=high
 ```
-- high/critical 취약점이 있으면 ❌ FAIL
-- moderate 이하는 ⚠️ WARNING
+- If there are high/critical vulnerabilities ❌ FAIL
+- Moderate or below are ⚠️ WARNING
 
-## 판정 기준
+## Judgment Criteria
 
-| 항목 | PASS | FAIL | SKIP |
+| Item | PASS | FAIL | SKIP |
 |------|------|------|------|
-| 타입 체크 | 에러 0 | 에러 1+ | tsconfig 없음 |
-| 린팅 | 에러 0 | 에러 1+ | lint 스크립트 없음 |
-| 빌드 | 성공 | 실패 | build 스크립트 없음 |
-| 보안 감사 | high/critical 0 | high/critical 1+ | — |
+| Type Check | 0 errors | 1+ errors | No tsconfig |
+| Linting | 0 errors | 1+ errors | No lint script |
+| Build | Success | Failure | No build script |
+| Security Audit | 0 high/critical | 1+ high/critical | — |
 
-하나라도 FAIL이면 이 단계는 ❌ FAIL.
+If even one item is FAIL, this stage is ❌ FAIL.

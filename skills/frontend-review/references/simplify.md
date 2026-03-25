@@ -1,42 +1,42 @@
-# ⑨ 단순화/유지보수성
+# ⑨ Simplification/Maintainability
 
-변경된 코드가 필요 이상으로 복잡하지 않은지 검증한다. 핵심 질문: **"더 간단하게 작성할 수 없는가?"**
+Verify that the changed code is not more complex than necessary. Core question: **"Can this be written more simply?"**
 
-## 체크리스트
+## Checklist
 
-### 복잡도
-- [ ] 함수/컴포넌트가 하나의 책임만 가지는가?
-- [ ] 3단계 이상 중첩된 조건문/콜백이 있는가? → early return 또는 분리 가능
-- [ ] 삼항 연산자가 중첩되어 있는가? → if/else 또는 별도 함수로 분리
-- [ ] 한 파일이 300줄 이상인가? → 분리 검토
+### Complexity
+- [ ] Does each function/component have a single responsibility?
+- [ ] Are there conditionals/callbacks nested 3+ levels deep? → Consider early return or extraction
+- [ ] Are ternary operators nested? → Split into if/else or a separate function
+- [ ] Is a file longer than 300 lines? → Consider splitting
 
-### 과설계 (YAGNI)
-- [ ] 현재 사용되지 않는 파라미터, 옵션, 설정이 추가되었는가?
-- [ ] "나중에 필요할 것 같아서" 만든 추상화가 있는가?
-- [ ] 한 곳에서만 사용되는 유틸/헬퍼 함수를 별도 파일로 분리했는가?
-- [ ] 제네릭 타입이 과도하게 복잡한가? (실제 사용처 대비)
+### Over-engineering (YAGNI)
+- [ ] Were parameters, options, or configurations added that are not currently used?
+- [ ] Are there abstractions created "just in case they'll be needed later"?
+- [ ] Was a utility/helper function used in only one place extracted into a separate file?
+- [ ] Are generic types excessively complex? (relative to actual usage)
 
-### 중복
-- [ ] 같은 로직이 2곳 이상에서 반복되는가?
-- [ ] 비슷하지만 약간 다른 컴포넌트/함수가 있는가? → 통합 가능 여부
+### Duplication
+- [ ] Is the same logic repeated in 2+ places?
+- [ ] Are there similar but slightly different components/functions? → Check if they can be consolidated
 
-### 원자적 변경
-- [ ] PR에 관련 없는 변경이 섞여있지 않은가?
-- [ ] 리팩토링과 기능 변경이 같은 PR에 있는가? → 분리 권장
+### Atomic Changes
+- [ ] Does the PR contain unrelated changes mixed in?
+- [ ] Are refactoring and feature changes in the same PR? → Recommend splitting
 
-### 가독성
-- [ ] 변수/함수 이름이 의도를 명확히 표현하는가?
-- [ ] 매직 넘버가 있는가? → 상수로 추출
-- [ ] 주석 없이는 이해할 수 없는 코드가 있는가? → 코드 자체를 명확하게 개선
+### Readability
+- [ ] Do variable/function names clearly express intent?
+- [ ] Are there magic numbers? → Extract to constants
+- [ ] Is there code that cannot be understood without comments? → Improve the code itself to be clearer
 
-## 판정 기준
+## Severity Criteria
 
-| 이슈 | 심각도 |
+| Issue | Severity |
 |------|--------|
-| 3단계+ 중첩 조건문/콜백 | ⚠️ WARNING |
-| YAGNI 위반 (미사용 추상화) | ⚠️ WARNING |
-| 같은 로직 3곳+ 중복 | ❌ FAIL |
-| 같은 로직 2곳 중복 | ⚠️ WARNING |
-| 관련 없는 변경이 섞인 PR | ⚠️ WARNING |
-| 매직 넘버 | ⚠️ WARNING |
-| 300줄+ 파일 | ⚠️ WARNING |
+| 3+ levels of nested conditionals/callbacks | ⚠️ WARNING |
+| YAGNI violation (unused abstractions) | ⚠️ WARNING |
+| Same logic duplicated in 3+ places | ❌ FAIL |
+| Same logic duplicated in 2 places | ⚠️ WARNING |
+| Unrelated changes mixed in a PR | ⚠️ WARNING |
+| Magic numbers | ⚠️ WARNING |
+| 300+ line file | ⚠️ WARNING |
