@@ -11,7 +11,7 @@
       "name": "FSD-review",
       "source": "./",
       "description": "FSD(Feature-Sliced Design) frontend code review — 9 parallel stages: CI/CD, architecture, code quality, design system, web quality, security, testing, dependencies, simplification",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "homepage": "https://github.com/sunmerrr/claude-FSD-review",
       "license": "MIT",
       "keywords": ["FSD", "feature-sliced-design", "frontend", "review", "code-quality", "accessibility", "security"]
