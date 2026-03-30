@@ -13,9 +13,9 @@ If 3 or more of the following directories exist, the project is considered an FS
 ```
 app        ← Top level: routing, providers, global configuration
 pages      ← Page-level composition
-widgets    ← Self-contained large functional blocks
-features   ← Reusable product features
-entities   ← Business entities (user, product)
+widgets    ← Composed blocks combining entities + features
+features   ← User actions/interactions (e.g., add-to-cart, login)
+entities   ← Business objects and their representation (user, product)
 shared     ← Bottom level: utilities, UI kit, types
 ```
 

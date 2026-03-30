@@ -1,7 +1,7 @@
 {
   "name": "FSD-review",
-  "version": "1.0.0",
-  "description": "FSD(Feature-Sliced Design) frontend code review — 7-stage review pipeline for architecture, code quality, design system, web quality, security, and testing",
+  "version": "2.0.0",
+  "description": "FSD(Feature-Sliced Design) architecture review — 3-stage review pipeline for layer dependencies, segment responsibilities, and slice complexity",
   "author": {
     "name": "sunmerrr"
   },

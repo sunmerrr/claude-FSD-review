@@ -10,37 +10,27 @@ Format for the review result report.
 
 | Step | Result | Issues |
 |------|------|------|
-| ① CI/CD | ✅/❌/⊘ | N |
-| ② Architecture | ✅/⚠️/⊘ | N |
-| ③ Code Quality | ✅/❌ | N |
-| ④ Design System | ✅/❌/⊘ | N |
-| ⑤ Web Quality | ✅/⚠️ | N |
-| ⑥ Security | ✅/❌ | N |
-| ⑦ Tests | ✅/❌/⊘ | N |
-| ⑧ Dependencies/Deployment | ✅/⚠️/⊘ | N |
-| ⑨ Simplification | ✅/⚠️ | N |
+| ① Architecture | ✅/⚠️/⊘ | N |
+| ② Code Quality | ✅/❌ | N |
+| ③ Simplification | ✅/⚠️ | N |
 
 ---
 
 ## Step Details
 
-### ① CI/CD
-
-| Item | Result | Details |
-|------|------|------|
-| Type Check | ✅/❌/⊘ | (summary on error) |
-| Linting | ✅/❌/⊘ | (number of errors) |
-| Build | ✅/❌/⊘ | (summary on error) |
-| Security Audit | ✅/❌ | (number of vulnerabilities) |
-
-### ② Architecture
+### ① Architecture
 
 > If not FSD structure: `⊘ SKIP — Not FSD structure`
 
 - (List of layer violations and dependency direction issues)
 - Each issue includes filename:line
 
-### ③ Code Quality
+### ② Code Quality
+
+**FSD Segment Responsibility Issues**:
+| File | Segment | Issue | Severity | Description |
+|------|---------|-------|--------|------|
+| `path/file.tsx` | `ui/` | Business logic in UI | ⚠️ | Description |
 
 **Anti-pattern Detection**:
 | File | Line | Anti-pattern | Severity | Description |
@@ -50,35 +40,15 @@ Format for the review result report.
 **Code Review Issues**:
 - (Specific issue list, including file:line)
 
-### ④ Design System
+### ③ Simplification
 
-> If no design system: `⊘ SKIP — Design system not detected`
+**FSD Slice Complexity Issues**:
+| File/Slice | Issue | Severity | Description |
+|-----------|-------|--------|------|
+| `features/logout/` | Over-slicing | ⚠️ | Description |
 
-- (List of issues such as hardcoded values, unused components, etc.)
-
-### ⑤ Web Quality
-
-**Accessibility**:
-- (Issue list)
-
-**Performance**:
-- (Issue list)
-
-**SEO**:
-- (Issue list, omit if not an SSR project)
-
-### ⑥ Security
-
-| File | Line | Threat | Severity | Description |
-|------|------|------|--------|------|
-| `path/file.tsx` | 15 | XSS | ❌ | `dangerouslySetInnerHTML` without sanitization |
-
-### ⑦ Tests
-
-| Item | Result | Details |
-|------|------|------|
-| Test Execution | ✅ N passed / ❌ N failed / ⊘ None | (list on failure) |
-| Test Quality | ⚠️ N warnings | (warning list) |
+**General Complexity Issues**:
+- (Specific issue list, including file:line)
 
 ---
 

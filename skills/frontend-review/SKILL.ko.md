@@ -1,25 +1,19 @@
 ---
 name: FSD-review
-description: FSD(Feature-Sliced Design) 기반 프론트엔드 프로젝트 전용 리뷰 스킬. 9개 리뷰 단계를 병렬 실행하고 리뷰 리포트를 생성한다. 플러그인 구조로 필요한 리뷰만 선택 가능.
-argument-hint: [--only ci,architecture] [--skip test]
+description: FSD(Feature-Sliced Design) 아키텍처 리뷰 — 레이어 의존성, 세그먼트 책임, 슬라이스 복잡도를 검증한다. 코드를 수정하지 않고 리뷰 리포트를 생성한다.
+argument-hint: [--only architecture,code-quality] [--skip simplify]
 ---
 
-# /FSD-review - FSD 프론트엔드 리뷰
+# /FSD-review - FSD 아키텍처 리뷰
 
-FSD(Feature-Sliced Design) 기반 프론트엔드 코드 변경사항을 9개 리뷰 단계로 검증하고 리포트를 생성한다. 코드를 수정하지 않는다 — 리뷰 결과만 문서로 남긴다.
+FSD(Feature-Sliced Design) 아키텍처 준수를 3개 리뷰 단계로 검증하고 리포트를 생성한다. 코드를 수정하지 않는다 — 리뷰 결과만 문서로 남긴다.
 
 ## 리뷰 단계
 
 ```
-① CI/CD (규칙 기반)     — tsc, lint, build, audit
-② 아키텍처 (FSD)        — 레이어 위반, 의존성 방향
-③ 코드 품질             — 체크리스트 + 클린코드 + React 안티패턴
-④ 디자인 시스템 준수     — 토큰 사용, 컴포넌트 일관성
-⑤ 웹 품질               — 접근성·성능·SEO 자동화 검사
-⑥ 보안                  — XSS, CSRF, 민감 데이터, 의존성
-⑦ 테스트                — 테스트 코드 실행 + 품질 검증
-⑧ 의존성/배포 안전성     — 새 라이브러리 검토, 호환성, 마이그레이션
-⑨ 단순화/유지보수성      — 복잡도, 중복, "더 간단할 수 없나?"
+① 아키텍처 (FSD)          — 레이어 위반, 의존성 방향, Public API
+② 코드 품질 (FSD 맥락)     — 세그먼트 책임, FSD 구조 내 안티패턴
+③ 단순화                   — 슬라이스/세그먼트 복잡도, 크로스 슬라이스 중복
 ```
 
 ## Step 1: 프로젝트 감지 & 설정
@@ -63,21 +57,15 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 ### 1-4. 인자 파싱
 
-- `--only <stages>`: 지정된 단계만 실행 (쉼표 구분, 예: `--only ci,security`)
-- `--skip <stages>`: 지정된 단계 건너뛰기 (예: `--skip test,web-quality`)
+- `--only <stages>`: 지정된 단계만 실행 (쉼표 구분, 예: `--only architecture,code-quality`)
+- `--skip <stages>`: 지정된 단계 건너뛰기 (예: `--skip simplify`)
 
 단계 이름 매핑:
 | 약칭 | 단계 |
 |------|------|
-| `ci` | ① CI/CD |
-| `architecture` | ② 아키텍처 |
-| `code-quality` | ③ 코드 품질 |
-| `design-system` | ④ 디자인 시스템 |
-| `web-quality` | ⑤ 웹 품질 |
-| `security` | ⑥ 보안 |
-| `test` | ⑦ 테스트 |
-| `deps` | ⑧ 의존성/배포 안전성 |
-| `simplify` | ⑨ 단순화/유지보수성 |
+| `architecture` | ① 아키텍처 |
+| `code-quality` | ② 코드 품질 |
+| `simplify` | ③ 단순화 |
 
 ---
 
@@ -89,16 +77,10 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 ```
 1. Step 1 완료 (프로젝트 감지, 변경 파일 수집)
-2. 9개 단계를 동시에 병렬 실행 (Agent tool 사용)
-   ├─ ① CI/CD
-   ├─ ② 아키텍처
-   ├─ ③ 코드 품질
-   ├─ ④ 디자인 시스템
-   ├─ ⑤ 웹 품질
-   ├─ ⑥ 보안
-   ├─ ⑦ 테스트
-   ├─ ⑧ 의존성/배포 안전성
-   └─ ⑨ 단순화/유지보수성
+2. 3개 단계를 동시에 병렬 실행 (Agent tool 사용)
+   ├─ ① 아키텍처
+   ├─ ② 코드 품질
+   └─ ③ 단순화
 3. 모든 결과 수집 → 리포트 종합
 ```
 
@@ -110,28 +92,7 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 모든 이슈는 리뷰 문서에 기록만 한다. 코드를 수정하지 않는다.
 
-### ① CI/CD (규칙 기반)
-
-`references/ci.md`의 체크리스트에 따라 실행.
-
-실제 명령어를 실행하고 pass/fail을 판정한다:
-```bash
-# 타입 체크
-{pkg-manager} run typecheck  # 또는 npx tsc --noEmit
-
-# 린팅
-{pkg-manager} run lint  # 또는 npx biome check . / npx eslint .
-
-# 빌드
-{pkg-manager} run build
-
-# 보안 감사
-npm audit --audit-level=high
-```
-
-각 명령어가 없으면 (scripts에 미정의) 해당 항목은 `⚠️ 스크립트 없음`으로 표시하고 넘어간다.
-
-### ② 아키텍처 (FSD)
+### ① 아키텍처 (FSD)
 
 `references/architecture.md`의 체크리스트에 따라 검증.
 
@@ -146,100 +107,25 @@ npm audit --audit-level=high
 
 > ⚠️ FSD 구조가 아닌 프로젝트는 이 단계를 자동 건너뛴다 (`app/`, `pages/`, `widgets/`, `features/`, `entities/`, `shared/` 디렉토리 존재 여부로 판단).
 
-### ③ 코드 품질
+### ② 코드 품질 (FSD 맥락)
 
 `references/code-quality.md`의 체크리스트에 따라 검증.
 
-변경된 파일을 읽고 AI가 판단:
-- 프론트엔드 코드 리뷰 체크리스트 (일반, ES6/7, React, CSS)
+변경된 파일을 읽고 **FSD 구조 관점에서** 판단:
+- FSD 세그먼트 책임 준수 (ui/에 비즈니스 로직 없는지, model/에 UI 코드 없는지 등)
+- 슬라이스 데이터 흐름 패턴 (적절한 조합 vs 직접 크로스 슬라이스 import)
 - React 안티패턴 감지 (prop drilling, 과도한 state, useEffect 남용 등)
-- 클린코드 기준 (함수 크기, 네이밍, SoC, DRY)
+- 일반 코드 품질 (ES6+, 클린코드, CSS)
 
-### ④ 디자인 시스템 준수
-
-`references/design-system.md`의 체크리스트에 따라 검증.
-
-변경된 파일에서:
-- 하드코딩된 색상값 감지 (`#fff`, `rgb(...)`, `hsl(...)` 등 → 디자인 토큰 사용 여부)
-- 하드코딩된 폰트 사이즈, 간격값 감지
-- 디자인 시스템 컴포넌트 대신 직접 만든 유사 컴포넌트 감지
-- variant/props 규칙 일관성
-
-> ⚠️ 디자인 시스템이 없는 프로젝트는 이 단계를 자동 건너뛴다 (디자인 토큰 파일 또는 UI 라이브러리 디렉토리 존재 여부로 판단).
-
-### ⑤ 웹 품질 (자동화 가능 범위만)
-
-`references/web-quality.md`의 체크리스트에 따라 검증.
-
-변경된 파일을 읽고 AI가 **코드 레벨에서 감지 가능한 항목만** 체크:
-
-**접근성**:
-- `eslint-plugin-jsx-a11y` 규칙 위반 패턴
-- `img`에 `alt` 누락, 빈 버튼, 잘못된 ARIA
-- 색상 대비 관련 하드코딩 감지
-
-**성능**:
-- LCP 이미지에 `lazy` 사용 여부
-- `width`/`height` 누락 이미지
-- 대형 라이브러리 barrel import
-- 불필요한 리렌더 패턴
-
-**SEO**:
-- 페이지 컴포넌트에 메타데이터 누락
-- `next/image` 대신 `<img>` 직접 사용
-- SSR/SSG 전략 적절성
-
-### ⑥ 보안
-
-`references/security.md`의 체크리스트에 따라 검증.
-
-변경된 파일에서 **전수 검사**:
-- `dangerouslySetInnerHTML` 사용 → 반드시 플래그
-- `eval()`, `new Function()` 사용 감지
-- `href="javascript:..."` 패턴
-- 사용자 입력의 DOM 직접 삽입
-- `NEXT_PUBLIC_` 환경변수에 API 키/시크릿 포함 여부
-- LocalStorage에 토큰/시크릿 저장 패턴
-- 서드파티 컴포넌트 XSS 취약점 패턴
-
-### ⑦ 테스트
-
-`references/test.md`의 체크리스트에 따라 검증.
-
-```bash
-# 테스트 실행
-{pkg-manager} run test  # 또는 npx vitest run
-```
-
-테스트 스크립트가 없거나 테스트 파일이 없으면 `⚠️ 테스트 없음`으로 표시하고 종료.
-
-테스트가 존재하면 실행 후 **테스트 코드 품질도 리뷰**:
-- 동작(behavior) 검증 vs 구현 세부사항 테스트
-- 테스트 내부 로직(if/for) 없는가
-- mock 사용 적절성
-- 엣지 케이스 커버리지
-
-### ⑧ 의존성/배포 안전성
-
-`references/deps.md`의 체크리스트에 따라 검증.
-
-변경된 `package.json`, lock 파일, import 구문을 분석하여:
-- 새로 추가된 라이브러리의 유지보수 상태 (마지막 업데이트, 주간 다운로드, 이슈 수)
-- 기존 라이브러리와 중복 기능 여부
-- 메이저 버전 업그레이드 시 breaking change 확인
-- 번들 사이즈 영향 (대형 라이브러리 추가 시 경고)
-- lock 파일 변경이 의도된 것인지 확인
-
-### ⑨ 단순화/유지보수성
+### ③ 단순화
 
 `references/simplify.md`의 체크리스트에 따라 검증.
 
-변경된 파일을 읽고 AI가 판단:
-- "더 간단하게 작성할 수 없는가?" — 불필요한 추상화, 과도한 래핑
-- 한 PR에 여러 관심사가 섞여있지 않은가 (원자적 변경 여부)
-- 미래를 위한 과설계 (YAGNI 위반)
-- 같은 로직의 중복 구현
-- 복잡한 조건문/중첩이 단순화 가능한가
+변경된 파일을 읽고 **슬라이스/세그먼트 복잡도**를 판단:
+- 과도한 슬라이싱: 자체 폴더를 정당화하기 어려운 사소한 슬라이스
+- 과소 슬라이싱: 관련 없는 여러 도메인을 처리하는 슬라이스
+- 크로스 슬라이스 중복: 여러 슬라이스에 같은 로직 반복 → 하위 레이어로 추출
+- 일반 복잡도: 중첩 조건문, YAGNI, 가독성
 
 ---
 
@@ -258,15 +144,9 @@ npm audit --audit-level=high
   FSD Review Complete
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  ① CI/CD          — ✅ PASS / ❌ FAIL (N개 이슈)
-  ② 아키텍처       — ✅ PASS / ⚠️ WARNING (N개 경고)
-  ③ 코드 품질      — ✅ PASS / ❌ FAIL (N개 이슈)
-  ④ 디자인 시스템   — ✅ PASS / ⊘ SKIP (디자인 시스템 없음)
-  ⑤ 웹 품질        — ✅ PASS / ⚠️ WARNING
-  ⑥ 보안           — ✅ PASS / ❌ FAIL
-  ⑦ 테스트         — ✅ PASS / ⊘ SKIP (테스트 없음)
-  ⑧ 의존성/배포    — ✅ PASS / ⚠️ WARNING
-  ⑨ 단순화         — ✅ PASS / ⚠️ WARNING
+  ① 아키텍처       — ✅ PASS / ⚠️ WARNING (N개 경고)
+  ② 코드 품질      — ✅ PASS / ❌ FAIL (N개 이슈)
+  ③ 단순화         — ✅ PASS / ⚠️ WARNING
 
   📄 .pipeline/review/{branch-name}-review.md
 ```

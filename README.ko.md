@@ -1,25 +1,19 @@
 # claude-FSD-review
 
-![status](https://img.shields.io/badge/status-beta-yellow) ![license](https://img.shields.io/badge/license-MIT-blue)
+![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin-blueviolet) ![status](https://img.shields.io/badge/status-beta-yellow) ![license](https://img.shields.io/badge/license-MIT-blue)
 
-[Claude Code](https://claude.com/claude-code) 기반 프론트엔드 종합 코드 리뷰 플러그인 + [FSD](https://fsd.how/) 아키텍처 검증.
+[Claude Code](https://claude.com/claude-code) 기반 [FSD](https://fsd.how/) (Feature-Sliced Design) 아키텍처 리뷰 플러그인.
 
-9개 리뷰 단계를 병렬 실행하여 CI/CD, FSD 아키텍처, 코드 품질, 디자인 시스템, 웹 품질, 보안, 테스트, 의존성, 단순화를 검토합니다. FSD 레이어/의존성 검증이 핵심 단계입니다. 코드를 수정하지 않고 리뷰 리포트를 생성합니다.
+FSD 아키텍처에 집중하는 3단계 병렬 리뷰 파이프라인: 레이어 의존성 검증, 세그먼트 책임 준수, 슬라이스 복잡도 분석. [Steiger](https://github.com/feature-sliced/steiger)(파일 구조)가 커버하지 못하는 **코드 내용 수준**의 리뷰를 보완합니다. 코드를 수정하지 않고 리뷰 리포트를 생성합니다.
 
 ## 리뷰 단계
 
 모든 단계가 **병렬로 동시 실행**됩니다.
 
 ```
-① CI/CD            — tsc, lint, build, audit
-② 아키텍처         — FSD 레이어 위반, 의존성 방향
-③ 코드 품질        — 체크리스트 + 클린코드 + React 안티패턴
-④ 디자인 시스템     — 토큰 사용, 컴포넌트 일관성
-⑤ 웹 품질          — 접근성, 성능, SEO
-⑥ 보안             — XSS, CSRF, 시크릿, 의존성
-⑦ 테스트           — 테스트 실행 + 테스트 코드 품질
-⑧ 의존성           — 새 라이브러리 검토, 호환성, 번들 사이즈
-⑨ 단순화           — 복잡도, 중복, YAGNI
+① 아키텍처      — FSD 레이어 위반, 의존성 방향, Public API
+② 코드 품질     — 세그먼트 책임, FSD 구조 내 안티패턴
+③ 단순화        — 슬라이스/세그먼트 복잡도, 크로스 슬라이스 중복
 ```
 
 ## 설치
@@ -47,31 +41,25 @@ cd claude-FSD-review
 FSD 프로젝트 디렉토리에서:
 
 ```bash
-# 전체 리뷰 (9개 단계 모두)
+# 전체 리뷰 (3개 단계 모두)
 /FSD-review
 
 # 특정 단계만 실행
-/FSD-review --only ci,security
+/FSD-review --only architecture,code-quality
 
 # 특정 단계 건너뛰기
-/FSD-review --skip test,web-quality
+/FSD-review --skip simplify
 ```
 
-리뷰 리포트는 `.review/{branch-name}-review.md`에 저장됩니다.
+리뷰 리포트는 `.pipeline/review/{branch-name}-review.md`에 저장됩니다.
 
 ## 단계 상세
 
 | 단계 | 하는 일 | 자동 스킵 조건 |
 |------|---------|---------------|
-| ① CI/CD | tsc, lint, build, audit 실행 | 스크립트 없으면 스킵 |
-| ② 아키텍처 | FSD 레이어 import 검증 | FSD 프로젝트가 아니면 스킵 |
-| ③ 코드 품질 | 클린코드, ES6+, React 안티패턴 | React 프로젝트가 아니면 React 체크 스킵 |
-| ④ 디자인 시스템 | 하드코딩 값, 컴포넌트 재사용 | 디자인 시스템 없으면 스킵 |
-| ⑤ 웹 품질 | 접근성, 성능, SEO 패턴 | SSR 아니면 SEO 스킵 |
-| ⑥ 보안 | XSS, CSRF, 시크릿, 의존성 | — |
-| ⑦ 테스트 | 테스트 실행 + 테스트 코드 품질 리뷰 | 테스트 파일 없으면 스킵 |
-| ⑧ 의존성 | 새 라이브러리 건전성, 중복, breaking changes | 의존성 변경 없으면 스킵 |
-| ⑨ 단순화 | 복잡도, 중복, YAGNI | — |
+| ① 아키텍처 | FSD 레이어 import 검증, 의존성 방향, Public API 접근, 비즈니스 로직 배치 | FSD 프로젝트가 아니면 스킵 |
+| ② 코드 품질 | 세그먼트 책임 검사 (ui/에 로직 없는지, model/에 UI 없는지), React 안티패턴, 데이터 흐름 | React 프로젝트가 아니면 React 체크 스킵 |
+| ③ 단순화 | 과도한/과소 슬라이싱, 크로스 슬라이스 중복, 일반 복잡도 | — |
 
 ## 단계 이름 매핑
 
@@ -79,15 +67,18 @@ FSD 프로젝트 디렉토리에서:
 
 | 약칭 | 단계 |
 |------|------|
-| `ci` | ① CI/CD |
-| `architecture` | ② 아키텍처 |
-| `code-quality` | ③ 코드 품질 |
-| `design-system` | ④ 디자인 시스템 |
-| `web-quality` | ⑤ 웹 품질 |
-| `security` | ⑥ 보안 |
-| `test` | ⑦ 테스트 |
-| `deps` | ⑧ 의존성 |
-| `simplify` | ⑨ 단순화 |
+| `architecture` | ① 아키텍처 |
+| `code-quality` | ② 코드 품질 |
+| `simplify` | ③ 단순화 |
+
+## Steiger와의 관계
+
+| | [Steiger](https://github.com/feature-sliced/steiger) | FSD-review |
+|--|---------|------------|
+| **수준** | 파일 구조 / 경로 | 코드 내용 / 의미 |
+| **검사** | 폴더 네이밍, import 경로, 디렉토리 규칙 | 세그먼트 책임, 슬라이스 복잡도, 안티패턴 |
+| **시점** | CI / 실시간 린팅 | 온디맨드 (개발 중 또는 PR 리뷰 시) |
+| **방식** | 정적 규칙 엔진 (20개 규칙) | AI 기반 맥락 분석 |
 
 ## Claude Code 없이 체크리스트 사용하기
 
@@ -95,24 +86,21 @@ FSD 프로젝트 디렉토리에서:
 
 - **팀 PR 리뷰 체크리스트**로 수동 사용
 - **다른 AI 도구의 프롬프트**로 사용 (체크리스트 내용을 붙여넣기)
-- **CI 통합** (CI 체크리스트는 GitHub Actions 단계에 매핑 가능)
 
 | 파일 | 내용 |
 |------|------|
-| `ci.md` | 타입 체크, 린트, 빌드, 감사 규칙 |
 | `architecture.md` | FSD 레이어 의존성 규칙 |
-| `code-quality.md` | 프론트엔드 코드 리뷰 + React 안티패턴 |
-| `design-system.md` | 디자인 토큰 & 컴포넌트 준수 |
-| `web-quality.md` | 접근성, 성능, SEO 체크 |
-| `security.md` | XSS, CSRF, 시크릿, 의존성 감사 |
-| `test.md` | 테스트 실행 + 테스트 코드 품질 |
-| `deps.md` | 새 라이브러리 검토, 버전 호환성, 번들 사이즈 |
-| `simplify.md` | 복잡도, 중복, YAGNI, 가독성 |
+| `code-quality.md` | 세그먼트 책임 + 코드 안티패턴 |
+| `simplify.md` | 슬라이스 복잡도, 중복, YAGNI |
 | `output-format.md` | 리뷰 리포트 출력 템플릿 |
 
 ## 제거
 
 ```bash
+# 플러그인으로 설치한 경우
+claude plugin uninstall FSD-review@sunmerrr-FSD-review
+
+# 수동 설치한 경우
 ./install.sh --uninstall
 ```
 

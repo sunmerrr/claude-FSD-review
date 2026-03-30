@@ -1,6 +1,59 @@
-# ③ 코드 품질 리뷰
+# ② 코드 품질 리뷰 (FSD 맥락)
 
-변경된 파일을 읽고 AI가 판단한다.
+변경된 파일을 읽고 **FSD 구조 관점에서** 코드 품질을 평가한다. 각 세그먼트/슬라이스 내 코드가 의도된 책임에 맞는지에 초점을 둔다.
+
+## FSD 세그먼트 책임 체크리스트
+
+> 핵심 질문: **"이 세그먼트에 이 코드가 있는 게 맞는가?"**
+
+- [ ] `ui/` 세그먼트에는 표현 코드만 — API 호출, 직접 store 변경, 비즈니스 로직 없음
+- [ ] `model/` 세그먼트에는 상태와 비즈니스 로직만 — DOM 조작, JSX, 스타일 코드 없음
+- [ ] `api/` 세그먼트에는 외부 통신만 — UI 렌더링, 상태 관리 없음
+- [ ] `lib/` 세그먼트에는 순수 유틸만 — 사이드 이펙트, 프레임워크 종속 코드 없음
+- [ ] 컴포넌트가 props/store를 통해 데이터를 받으며, 상위 레이어에서 직접 import하지 않음
+
+**위반 예시와 해결책**:
+
+```typescript
+// ❌ ui/ 세그먼트에 비즈니스 로직
+// features/cart/ui/CartButton.tsx
+function CartButton({ item }) {
+  const discount = item.price > 100 ? item.price * 0.1 : 0  // 비즈니스 로직
+  const finalPrice = item.price - discount                     // 비즈니스 로직
+  return <button>{finalPrice}</button>
+}
+
+// ✅ 로직은 model/ 또는 lib/에
+// features/cart/lib/calcPrice.ts
+export function calcFinalPrice(price: number) {
+  const discount = price > 100 ? price * 0.1 : 0
+  return price - discount
+}
+
+// features/cart/ui/CartButton.tsx
+import { calcFinalPrice } from '../lib/calcPrice'
+function CartButton({ item }) {
+  return <button>{calcFinalPrice(item.price)}</button>
+}
+```
+
+```typescript
+// ❌ model/ 세그먼트에 UI 코드
+// features/auth/model/useAuth.ts
+export function useAuth() {
+  const [user, setUser] = useState(null)
+  document.title = user?.name ?? 'Guest'  // model에서 DOM 조작
+  return { user }
+}
+
+// ✅ 사이드 이펙트는 ui/에서 또는 프레임워크를 통해 처리 (예: 컴포넌트 내 useEffect)
+```
+
+## FSD 슬라이스 데이터 흐름 체크리스트
+
+- [ ] 슬라이스 간 데이터는 올바른 FSD 패턴(상위 레이어에서 조합, props, store)으로 전달 — 직접 크로스 슬라이스 import 아님
+- [ ] feature 간 공유 상태는 entities 또는 shared 레이어로 끌어올림 — 각 feature에 중복 없음
+- [ ] 슬라이스가 public API 너머로 내부 구현 세부사항을 노출하지 않음
 
 ## 일반 체크리스트
 

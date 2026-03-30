@@ -118,9 +118,9 @@ install_skills() {
   echo -e "${GREEN}Installation complete!${NC}"
   echo ""
   echo "Use in Claude Code:"
-  echo "  /FSD-review          Run full review (7 stages)"
-  echo "  /FSD-review --only ci,security   Run specific stages"
-  echo "  /FSD-review --skip test          Skip specific stages"
+  echo "  /FSD-review                             Run full review (3 stages)"
+  echo "  /FSD-review --only architecture          Run specific stages"
+  echo "  /FSD-review --skip simplify              Skip specific stages"
 }
 
 parse_args "$@"

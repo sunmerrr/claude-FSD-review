@@ -1,25 +1,19 @@
 ---
 name: FSD-review
-description: A review skill dedicated to FSD (Feature-Sliced Design) based frontend projects. Runs 9 review stages in parallel and generates a review report. Plugin architecture allows selecting only the reviews you need.
-argument-hint: [--only ci,architecture] [--skip test]
+description: FSD (Feature-Sliced Design) architecture review — validates layer dependencies, segment responsibilities, and slice complexity. Generates a review report without modifying code.
+argument-hint: [--only architecture,code-quality] [--skip simplify]
 ---
 
-# /FSD-review - FSD Frontend Review
+# /FSD-review - FSD Architecture Review
 
-Verifies FSD (Feature-Sliced Design) based frontend code changes through 9 review stages and generates a report. Does not modify code — only documents review results.
+Verifies FSD (Feature-Sliced Design) architecture compliance through 3 review stages and generates a report. Does not modify code — only documents review results.
 
 ## Review Stages
 
 ```
-① CI/CD (rule-based)        — tsc, lint, build, audit
-② Architecture (FSD)        — layer violations, dependency direction
-③ Code Quality              — checklist + clean code + React anti-patterns
-④ Design System Compliance  — token usage, component consistency
-⑤ Web Quality               — accessibility, performance, SEO automated checks
-⑥ Security                  — XSS, CSRF, sensitive data, dependencies
-⑦ Testing                   — test execution + quality verification
-⑧ Deps/Deploy Safety        — new library review, compatibility, migration
-⑨ Simplification/Maintainability — complexity, duplication, "can it be simpler?"
+① Architecture (FSD)        — layer violations, dependency direction, public API
+② Code Quality (FSD Context) — segment responsibility, anti-patterns within FSD structure
+③ Simplification            — slice/segment complexity, cross-slice duplication
 ```
 
 ## Step 1: Project Detection & Configuration
@@ -63,21 +57,15 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 ### 1-4. Argument Parsing
 
-- `--only <stages>`: Run only the specified stages (comma-separated, e.g., `--only ci,security`)
-- `--skip <stages>`: Skip the specified stages (e.g., `--skip test,web-quality`)
+- `--only <stages>`: Run only the specified stages (comma-separated, e.g., `--only architecture,code-quality`)
+- `--skip <stages>`: Skip the specified stages (e.g., `--skip simplify`)
 
 Stage name mapping:
 | Alias | Stage |
 |------|------|
-| `ci` | ① CI/CD |
-| `architecture` | ② Architecture |
-| `code-quality` | ③ Code Quality |
-| `design-system` | ④ Design System |
-| `web-quality` | ⑤ Web Quality |
-| `security` | ⑥ Security |
-| `test` | ⑦ Testing |
-| `deps` | ⑧ Deps/Deploy Safety |
-| `simplify` | ⑨ Simplification/Maintainability |
+| `architecture` | ① Architecture |
+| `code-quality` | ② Code Quality |
+| `simplify` | ③ Simplification |
 
 ---
 
@@ -89,16 +77,10 @@ All stages are **executed in parallel simultaneously**. Detailed checklists for 
 
 ```
 1. Step 1 complete (project detection, changed file collection)
-2. Run all 9 stages in parallel simultaneously (using Agent tool)
-   ├─ ① CI/CD
-   ├─ ② Architecture
-   ├─ ③ Code Quality
-   ├─ ④ Design System
-   ├─ ⑤ Web Quality
-   ├─ ⑥ Security
-   ├─ ⑦ Testing
-   ├─ ⑧ Deps/Deploy Safety
-   └─ ⑨ Simplification/Maintainability
+2. Run all 3 stages in parallel simultaneously (using Agent tool)
+   ├─ ① Architecture
+   ├─ ② Code Quality
+   └─ ③ Simplification
 3. Collect all results → compile report
 ```
 
@@ -110,28 +92,7 @@ Result verdicts for each stage:
 
 All issues are only recorded in the review document. No code is modified.
 
-### ① CI/CD (Rule-Based)
-
-Execute according to the checklist in `references/ci.md`.
-
-Run the actual commands and determine pass/fail:
-```bash
-# Type check
-{pkg-manager} run typecheck  # or npx tsc --noEmit
-
-# Linting
-{pkg-manager} run lint  # or npx biome check . / npx eslint .
-
-# Build
-{pkg-manager} run build
-
-# Security audit
-npm audit --audit-level=high
-```
-
-If a command does not exist (not defined in scripts), mark the item as `⚠️ Script not found` and move on.
-
-### ② Architecture (FSD)
+### ① Architecture (FSD)
 
 Verify according to the checklist in `references/architecture.md`.
 
@@ -146,100 +107,25 @@ When violations are found, refer to the solutions in `references/architecture.md
 
 > ⚠️ Projects that do not follow the FSD structure will automatically skip this stage (determined by the presence of `app/`, `pages/`, `widgets/`, `features/`, `entities/`, `shared/` directories).
 
-### ③ Code Quality
+### ② Code Quality (FSD Context)
 
 Verify according to the checklist in `references/code-quality.md`.
 
-Read the changed files and let AI evaluate:
-- Frontend code review checklist (general, ES6/7, React, CSS)
+Read the changed files and evaluate **from the FSD structure perspective**:
+- FSD segment responsibility compliance (ui/ has no business logic, model/ has no UI code, etc.)
+- Slice data flow patterns (proper composition vs direct cross-slice imports)
 - React anti-pattern detection (prop drilling, excessive state, useEffect abuse, etc.)
-- Clean code standards (function size, naming, SoC, DRY)
+- General code quality (ES6+, clean code, CSS)
 
-### ④ Design System Compliance
-
-Verify according to the checklist in `references/design-system.md`.
-
-In the changed files:
-- Detect hardcoded color values (`#fff`, `rgb(...)`, `hsl(...)`, etc. → check design token usage)
-- Detect hardcoded font sizes and spacing values
-- Detect custom-built components that duplicate design system components
-- Variant/props rule consistency
-
-> ⚠️ Projects without a design system will automatically skip this stage (determined by the presence of design token files or UI library directories).
-
-### ⑤ Web Quality (Automatable Scope Only)
-
-Verify according to the checklist in `references/web-quality.md`.
-
-Read the changed files and let AI check **only items detectable at the code level**:
-
-**Accessibility**:
-- `eslint-plugin-jsx-a11y` rule violation patterns
-- Missing `alt` on `img`, empty buttons, incorrect ARIA
-- Hardcoded color contrast detection
-
-**Performance**:
-- Use of `lazy` on LCP images
-- Images missing `width`/`height`
-- Barrel imports of large libraries
-- Unnecessary re-render patterns
-
-**SEO**:
-- Missing metadata in page components
-- Direct use of `<img>` instead of `next/image`
-- SSR/SSG strategy appropriateness
-
-### ⑥ Security
-
-Verify according to the checklist in `references/security.md`.
-
-**Exhaustive scan** of the changed files:
-- `dangerouslySetInnerHTML` usage → must be flagged
-- `eval()`, `new Function()` usage detection
-- `href="javascript:..."` patterns
-- Direct DOM insertion of user input
-- Whether `NEXT_PUBLIC_` environment variables contain API keys/secrets
-- Patterns of storing tokens/secrets in LocalStorage
-- XSS vulnerability patterns in third-party components
-
-### ⑦ Testing
-
-Verify according to the checklist in `references/test.md`.
-
-```bash
-# Run tests
-{pkg-manager} run test  # or npx vitest run
-```
-
-If there is no test script or no test files, mark as `⚠️ No tests` and finish.
-
-If tests exist, run them and also **review test code quality**:
-- Behavior verification vs implementation detail testing
-- No internal logic (if/for) inside tests
-- Appropriate mock usage
-- Edge case coverage
-
-### ⑧ Deps/Deploy Safety
-
-Verify according to the checklist in `references/deps.md`.
-
-Analyze changed `package.json`, lock files, and import statements for:
-- Maintenance status of newly added libraries (last update, weekly downloads, issue count)
-- Duplicate functionality with existing libraries
-- Breaking change check for major version upgrades
-- Bundle size impact (warn on large library additions)
-- Whether lock file changes are intentional
-
-### ⑨ Simplification/Maintainability
+### ③ Simplification
 
 Verify according to the checklist in `references/simplify.md`.
 
-Read the changed files and let AI evaluate:
-- "Can this be written more simply?" — unnecessary abstraction, excessive wrapping
-- Are multiple concerns mixed in a single PR? (atomic change check)
-- Over-engineering for the future (YAGNI violations)
-- Duplicate implementation of the same logic
-- Can complex conditionals/nesting be simplified?
+Read the changed files and evaluate **slice/segment complexity**:
+- Over-slicing: trivial slices that don't justify their own folder
+- Under-slicing: slices handling multiple unrelated domains
+- Cross-slice duplication: same logic repeated across slices → extract to lower layer
+- General complexity: nested conditionals, YAGNI, readability
 
 ---
 
@@ -258,15 +144,9 @@ Save the report to `.pipeline/review/{branch-name}-review.md`.
   FSD Review Complete
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  ① CI/CD              — ✅ PASS / ❌ FAIL (N issues)
-  ② Architecture       — ✅ PASS / ⚠️ WARNING (N warnings)
-  ③ Code Quality       — ✅ PASS / ❌ FAIL (N issues)
-  ④ Design System      — ✅ PASS / ⊘ SKIP (no design system)
-  ⑤ Web Quality        — ✅ PASS / ⚠️ WARNING
-  ⑥ Security           — ✅ PASS / ❌ FAIL
-  ⑦ Testing            — ✅ PASS / ⊘ SKIP (no tests)
-  ⑧ Deps/Deploy        — ✅ PASS / ⚠️ WARNING
-  ⑨ Simplification     — ✅ PASS / ⚠️ WARNING
+  ① Architecture       — ✅ PASS / ⚠️ WARNING (N warnings)
+  ② Code Quality       — ✅ PASS / ❌ FAIL (N issues)
+  ③ Simplification     — ✅ PASS / ⚠️ WARNING
 
   📄 .pipeline/review/{branch-name}-review.md
 ```
