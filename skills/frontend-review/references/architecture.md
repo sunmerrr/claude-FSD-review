@@ -4,15 +4,19 @@ Verify compliance with FSD architecture. Skip this step for projects that do not
 
 ## FSD Detection
 
-If 3 or more of the following directories exist, the project is considered an FSD project:
-- `app/`, `pages/`, `widgets/`, `features/`, `entities/`, `shared/`
-- `src/app/`, `src/pages/`, `src/widgets/`, `src/features/`, `src/entities/`, `src/shared/`
+If 2 or more of the following directories exist, the project is considered an FSD project:
+- `app/`, `pages/` (or `views/`), `widgets/`, `features/`, `entities/`, `shared/`
+- `src/app/`, `src/pages/` (or `src/views/`), `src/widgets/`, `src/features/`, `src/entities/`, `src/shared/`
+
+> Even if only `app/` (or `src/app/`) is present, the Layer Responsibility check still applies.
+
+> In frameworks with file-based routing (Next.js, Nuxt, etc.), `pages/` is reserved by the framework. In these projects, the FSD pages layer is typically named `views/`. All rules for `pages/` apply equally to `views/`.
 
 ## FSD 6 Layers (Top → Bottom)
 
 ```
 app        ← Top level: routing, providers, global configuration
-pages      ← Page-level composition
+pages/views ← Page-level composition (views/ when framework reserves pages/)
 widgets    ← Composed blocks combining entities + features
 features   ← User actions/interactions (e.g., add-to-cart, login)
 entities   ← Business objects and their representation (user, product)
@@ -28,9 +32,9 @@ shared     ← Bottom level: utilities, UI kit, types
 
 Allowed dependency directions:
 ```
-app → pages → widgets → features → entities → shared
-         ↘      ↘         ↘          ↘
-          shared  shared    shared     shared
+app → pages(views) → widgets → features → entities → shared
+              ↘          ↘         ↘          ↘
+               shared     shared    shared     shared
 ```
 
 **Violation examples and solutions**:
@@ -79,7 +83,7 @@ export { LoginForm } from './ui/LoginForm'
 | General-purpose HTTP client (axios wrapper, fetch config) | `shared/api` | `shared/api/client.ts` |
 | Specific entity CRUD | `entities/*/api` | `entities/user/api/getUser.ts` |
 | API tied to a business feature | `features/*/api` | `features/checkout/api/processPayment.ts` |
-| Data composition for page loading | `pages/*/api` or `pages/*/model` | `pages/dashboard/model/loadDashboard.ts` |
+| Data composition for page loading | `pages/*/api` (or `views/*/api`) | `views/dashboard/model/loadDashboard.ts` |
 
 **When business logic is mixed into UI**:
 
@@ -142,6 +146,74 @@ features/auth/
 └── index.ts     ← public API
 ```
 
+### Layer Responsibility
+
+- [ ] Do `app/` route components contain only routing, providers, and global configuration — no UI component definitions or business logic?
+- [ ] Do `pages/` (or `views/`) components only compose slices from lower layers, without directly implementing UI or logic?
+- [ ] Is component composition (combining multiple UI blocks) placed in `widgets/` or `pages/views`, not in `app/`?
+- [ ] Is user interaction logic (form handling, mutations, event handlers) placed in the `features/` layer?
+- [ ] Are domain entity representations (cards, lists, data models) placed in the `entities/` layer?
+
+**Detection criteria**:
+
+| Layer | Allowed | Violation (should be moved to a lower layer) |
+|-------|---------|----------------------------------------------|
+| `app/` | Route configuration, provider wrapping, global layout | UI component definitions, business logic, API calls, form handling, domain entity representation |
+| `pages/` (`views/`) | Import & compose lower-layer slices, page layout | Defining its own UI components or logic beyond composition, direct API calls |
+| `widgets/` | Compose entities + features into independent UI blocks | Direct API calls, business logic implementation, domain entity definitions |
+
+**Violation examples and solutions**:
+
+| Violation | Code | Solution |
+|-----------|------|----------|
+| UI composition in `app/` | `app/routes/home.tsx` defines `<Header>`, `<Sidebar>`, `<Feed>` inline | Extract into a widget (e.g., `widgets/home-layout`) or move to `pages/home` |
+| Interaction logic in `app/` | `app/routes/login.tsx` handles form submit, calls login API, manages loading state | Move to `features/auth` — create `features/auth/ui/LoginForm.tsx` |
+| Entity representation in `app/` or `pages/views` | `views/profile/ui/index.tsx` defines `<UserAvatar>`, `<UserStats>` inline | Move to `entities/user/ui/` and import from there |
+
+**Code example**:
+
+```typescript
+// ❌ All UI and logic packed into app/ route
+// app/routes/dashboard.tsx
+export default function DashboardPage() {
+  const [posts, setPosts] = useState([])
+  useEffect(() => {
+    fetch('/api/posts').then(r => r.json()).then(setPosts)
+  }, [])
+
+  return (
+    <div>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/settings">Settings</a>
+      </nav>
+      <main>
+        {posts.map(post => (
+          <div key={post.id}>
+            <img src={post.author.avatar} />
+            <h2>{post.title}</h2>
+            <p>{post.body}</p>
+          </div>
+        ))}
+      </main>
+    </div>
+  )
+}
+
+// ✅ Properly separated by layer
+// entities/post/ui/PostCard.tsx  ← entity representation
+// features/post-feed/ui/PostFeed.tsx  ← data fetching + list rendering
+// widgets/dashboard-layout/ui/DashboardLayout.tsx  ← layout composition
+// views/dashboard/ui/index.tsx  ← composes widgets/features (or pages/ if no framework conflict)
+export default function DashboardPage() {
+  return (
+    <DashboardLayout>
+      <PostFeed />
+    </DashboardLayout>
+  )
+}
+```
+
 ## Severity Criteria
 
 | Issue | Severity |
@@ -153,5 +225,8 @@ features/auth/
 | Business logic in shared | ⚠️ WARNING |
 | Business logic mixed in UI components | ⚠️ WARNING |
 | No segment separation (all code in a single file) | ⚠️ WARNING |
+| Lower-layer code in `app/` route components | ⚠️ WARNING |
+| Direct UI/logic implementation in `pages/` (`views/`) | ⚠️ WARNING |
+| API calls or business logic in `widgets/` | ⚠️ WARNING |
 
 > All architecture violations are treated as WARNING. They are not auto-fixed; instead, warnings and suggested resolution directions are documented in the review.

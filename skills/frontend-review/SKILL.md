@@ -105,7 +105,7 @@ Verify according to the checklist in `references/architecture.md`.
 
 When violations are found, refer to the solutions in `references/architecture.md` and **include specific resolution directions in the report**. (Does not modify code)
 
-> ⚠️ Projects that do not follow the FSD structure will automatically skip this stage (determined by the presence of `app/`, `pages/`, `widgets/`, `features/`, `entities/`, `shared/` directories).
+> ⚠️ Projects that do not follow the FSD structure will automatically skip this stage (determined by the presence of `app/`, `pages/` (or `views/`), `widgets/`, `features/`, `entities/`, `shared/` directories).
 
 ### ② Code Quality (FSD Context)
 

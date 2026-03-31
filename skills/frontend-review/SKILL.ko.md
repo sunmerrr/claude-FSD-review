@@ -105,7 +105,7 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 위반 발견 시 `references/architecture.md`의 해결책을 참고하여 **구체적인 해결 방향을 리포트에 포함**한다. (코드를 수정하지는 않는다)
 
-> ⚠️ FSD 구조가 아닌 프로젝트는 이 단계를 자동 건너뛴다 (`app/`, `pages/`, `widgets/`, `features/`, `entities/`, `shared/` 디렉토리 존재 여부로 판단).
+> ⚠️ FSD 구조가 아닌 프로젝트는 이 단계를 자동 건너뛴다 (`app/`, `pages/` (또는 `views/`), `widgets/`, `features/`, `entities/`, `shared/` 디렉토리 존재 여부로 판단).
 
 ### ② 코드 품질 (FSD 맥락)
 
